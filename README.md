@@ -6,6 +6,9 @@
 
 A boto3-compatible Python SDK for interacting with OpenS3, a local implementation of Amazon S3-like object storage functionality. This SDK provides a familiar interface for developers used to AWS boto3, making it easy to transition between AWS S3 and OpenS3.
 
+> **⚠️ WARNING: You must have the OpenS3-server set up and running for this SDK to work properly.**
+> Please refer to the [OpenS3-server repository](https://github.com/SourceBox-LLC/OpenS3-server) for server setup instructions.
+
 ## Table of Contents
 
 - [Features](#features)
