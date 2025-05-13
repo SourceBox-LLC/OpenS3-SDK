@@ -2,6 +2,7 @@
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/openS3-sdk.svg)](https://badge.fury.io/py/openS3-sdk)
 
 A boto3-compatible Python SDK for interacting with OpenS3, a local implementation of Amazon S3-like object storage functionality. This SDK provides a familiar interface for developers used to AWS boto3, making it easy to transition between AWS S3 and OpenS3.
 
@@ -31,7 +32,14 @@ A boto3-compatible Python SDK for interacting with OpenS3, a local implementatio
 
 ## Installation
 
-### From Source (Current Method)
+### From PyPI (Recommended)
+
+```bash
+# Install from PyPI
+pip install openS3-sdk
+```
+
+### From Source
 
 ```bash
 # Clone the repository
@@ -54,6 +62,8 @@ pip install -e .
 ```bash
 pip install git+https://github.com/yourusername/opens3-sdk.git
 ```
+
+**Note**: While the package name on PyPI is `openS3-sdk`, you'll still import it using `import opens3` in your code.
 
 ## Quick Start
 
