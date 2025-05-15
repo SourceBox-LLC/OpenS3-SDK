@@ -66,8 +66,14 @@ class S3Client:
         response.raise_for_status()
         
         # For some calls like get_object, we might not want to parse as JSON
-        if method.lower() == 'get' and path.startswith('/buckets/') and '/' in path[9:]:
-            # This is likely a download_object call
+        # Only treat it as a file download if the path matches /buckets/{bucket}/objects/{key}
+        # where {key} is a specific object key
+        if (method.lower() == 'get' and 
+            path.startswith('/buckets/') and 
+            '/objects/' in path and 
+            # Don't treat the general list objects endpoint as a download
+            not path.endswith('/objects')):
+            # This is a download_object call for a specific object
             return {
                 'Body': response,
                 'ContentLength': len(response.content),
