@@ -62,8 +62,26 @@ class S3Client:
         url = urljoin(self.endpoint_url, path)
         response = self.session.request(method, url, auth=self.auth, **kwargs)
         
-        # Raise for HTTP errors (4XX, 5XX)
-        response.raise_for_status()
+        # Instead of raising, handle error responses
+        if 400 <= response.status_code < 600:
+            error_detail = 'Unknown error'
+            try:
+                # Try to extract detailed error message from JSON response
+                error_json = response.json()
+                if 'detail' in error_json:
+                    error_detail = error_json['detail']
+                elif 'message' in error_json:
+                    error_detail = error_json['message']
+            except:
+                # Fallback if we can't parse JSON
+                error_detail = response.text if response.text else response.reason
+                
+            # Create a requests HTTPError with the detailed message
+            from requests.exceptions import HTTPError
+            http_error = HTTPError(f"{response.status_code} {response.reason}: {error_detail}", response=response)
+            http_error.detail = error_detail  # Add detail as an attribute for easier access
+            http_error.status_code = response.status_code
+            raise http_error
         
         # For some calls like get_object, we might not want to parse as JSON
         # Only treat it as a file download if the path matches /buckets/{bucket}/objects/{key}

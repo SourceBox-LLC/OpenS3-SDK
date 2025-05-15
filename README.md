@@ -311,7 +311,9 @@ response = s3.delete_object(Bucket='my-bucket', Key='hello.txt')
 
 ## Error Handling
 
-The SDK provides boto3-compatible error handling. Here's how to handle common errors:
+The SDK provides boto3-compatible error handling with enhanced error messages. Starting from version 0.1.6, the SDK includes detailed error information from the server to help with debugging and user feedback.
+
+### Basic Error Handling
 
 ```python
 from opens3.exceptions import ClientError, NoSuchBucket, NoSuchKey
@@ -325,6 +327,29 @@ except NoSuchKey as e:
 except ClientError as e:
     print(f"Error: {e.response['Error']['Message']}")
 ```
+
+### Enhanced Error Details (v0.1.6+)
+
+In version 0.1.6 and above, HTTP errors include additional details extracted from the server response:
+
+```python
+import requests
+
+try:
+    # Try to delete a non-empty bucket
+    s3.delete_bucket(Bucket='my-bucket-with-objects')
+except requests.exceptions.HTTPError as e:
+    # Access detailed error message from the server
+    if hasattr(e, 'detail'):
+        print(f"Detailed error: {e.detail}")
+    # Access the original status code
+    if hasattr(e, 'status_code'):
+        print(f"Status code: {e.status_code}")
+    # General error handling
+    print(f"Error: {str(e)}")
+```
+
+This provides more specific information about why operations failed, such as detailed reasons for bucket deletion failures.
 
 ## Response Structure
 
