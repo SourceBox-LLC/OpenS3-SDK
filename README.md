@@ -46,7 +46,7 @@ pip install openS3-sdk
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/opens3-sdk.git
+git clone https://github.com/SourceBox-LLC/OpenS3-SDK.git
 cd opens3-sdk
 
 # Create and activate a virtual environment (optional but recommended)
@@ -63,7 +63,7 @@ pip install -e .
 ### From GitHub
 
 ```bash
-pip install git+https://github.com/yourusername/opens3-sdk.git
+pip install git+https://github.com/SourceBox-LLC/OpenS3-SDK.git
 ```
 
 **Note**: While the package name on PyPI is `openS3-sdk`, you'll still import it using `import opens3` in your code.

@@ -158,7 +158,7 @@ class S3Client:
             }
         }
     
-    def put_object(self, Bucket, Key, Body):
+    def put_object(self, Bucket, Key, Body, **kwargs):
         """
         Add an object to a bucket.
         
@@ -170,6 +170,8 @@ class S3Client:
             The key (name) of the object.
         Body : bytes or file-like object
             The content of the object.
+        **kwargs : dict
+            Additional parameters like ContentType, Metadata, etc.
             
         Returns
         -------
@@ -193,11 +195,26 @@ class S3Client:
             # Now upload the temp file
             with open(temp_path, 'rb') as f:
                 files = {'file': (Key, f)}
-                response = self._make_api_call(
-                    'post',
-                    f'/buckets/{Bucket}/objects',
-                    files=files
-                )
+                
+                # Handle additional metadata if provided
+                json_data = {}
+                if 'Metadata' in kwargs:
+                    json_data['metadata'] = kwargs['Metadata']
+                
+                # Only include json parameter if we have metadata
+                if json_data:
+                    response = self._make_api_call(
+                        'post',
+                        f'/buckets/{Bucket}/objects',
+                        files=files,
+                        data={'json': json.dumps(json_data)}
+                    )
+                else:
+                    response = self._make_api_call(
+                        'post',
+                        f'/buckets/{Bucket}/objects',
+                        files=files
+                    )
         finally:
             # Clean up
             os.unlink(temp_path)
@@ -366,3 +383,76 @@ class S3Client:
                 'HTTPStatusCode': 200
             }
         }
+        
+    def list_objects(self, Bucket, Prefix=None):
+        """
+        List objects in a bucket (legacy method).
+        
+        This is an alias for list_objects_v2 to maintain compatibility with
+        code that uses the older S3 API naming.
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket.
+        Prefix : str, optional
+            Only return objects that start with this prefix.
+            
+        Returns
+        -------
+        dict
+            A dictionary containing a list of objects.
+        """
+        return self.list_objects_v2(Bucket, Prefix)
+        
+    def head_object(self, Bucket, Key):
+        """
+        Retrieve metadata from an object without returning the object itself.
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket.
+        Key : str
+            The key of the object.
+            
+        Returns
+        -------
+        dict
+            The object metadata.
+        """
+        # We need to implement head_object for metadata retrieval
+        # In this simple implementation, we'll get metadata from the server
+        # by making a special call to the same endpoint
+        try:
+            # First check if the object exists by getting its size
+            response = self._make_api_call(
+                'head',
+                f'/buckets/{Bucket}/objects/{Key}'
+            )
+            
+            # Try to get metadata from sidecar file if it exists
+            metadata = {}
+            try:
+                metadata_response = self._make_api_call(
+                    'get',
+                    f'/buckets/{Bucket}/objects/{Key}/metadata'
+                )
+                if 'metadata' in metadata_response:
+                    metadata = metadata_response['metadata']
+            except Exception:
+                # Metadata endpoint might not exist, which is fine
+                pass
+                
+            # Return in boto3-like format
+            return {
+                'ContentLength': response.get('size', 0),
+                'LastModified': datetime.datetime.fromisoformat(response.get('last_modified', datetime.datetime.now().isoformat()))
+                                if isinstance(response.get('last_modified', ''), str)
+                                else response.get('last_modified', datetime.datetime.now()),
+                'ContentType': response.get('content_type', 'application/octet-stream'),
+                'Metadata': metadata
+            }
+        except Exception as e:
+            # If head request fails, the object likely doesn't exist
+            raise Exception(f"Object does not exist: {e}")
