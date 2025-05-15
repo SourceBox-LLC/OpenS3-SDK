@@ -288,6 +288,9 @@ class S3Client:
         
         # Convert to boto3-like response
         contents = []
+        # Print the actual response for debugging
+        print(f"DEBUG - SDK received from server: {response}")
+        
         for obj in response.get('objects', []):
             contents.append({
                 'Key': obj['key'],
@@ -298,6 +301,9 @@ class S3Client:
                 'ETag': '"fake-etag"',  # OpenS3 doesn't provide ETags yet
                 'StorageClass': 'STANDARD'  # OpenS3 doesn't have storage classes
             })
+        
+        # Print the contents list being returned
+        print(f"DEBUG - SDK returning contents: {contents}")
         
         return {
             'Contents': contents,
