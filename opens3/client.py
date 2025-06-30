@@ -414,6 +414,49 @@ class S3Client:
             }
         }
         
+    def head_bucket(self, Bucket):
+        """
+        Check if a bucket exists and if the caller has permission to access it.
+        
+        This method is more efficient than listing all buckets when you only need
+        to check the existence of a specific bucket.
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket to check.
+            
+        Returns
+        -------
+        bool
+            True if the bucket exists and the caller has permission to access it,
+            False if the bucket does not exist.
+            
+        Raises
+        ------
+        HTTPError
+            If the caller does not have permission to access the bucket (403) or
+            for other errors besides 404 (bucket not found).
+        """
+        url = urljoin(self.endpoint_url, f'/buckets/{Bucket}')
+        try:
+            response = self.session.head(url, auth=self.auth)
+            
+            if response.status_code == 200:
+                return True
+            elif response.status_code == 404:
+                return False
+            else:
+                # Handle other error codes (e.g., 403 Forbidden)
+                response.raise_for_status()
+                
+        except Exception as e:
+            # If it's a 404, return False for bucket not found
+            if hasattr(e, 'response') and e.response.status_code == 404:
+                return False
+            # Re-raise other exceptions
+            raise
+        
     def list_objects(self, Bucket, Prefix=None):
         """
         List objects in a bucket (legacy method).
