@@ -101,11 +101,15 @@ import opens3
 # Basic initialization with defaults (uses admin/password auth)
 s3 = opens3.client('s3', endpoint_url='http://localhost:8000')
 
-# AWS-style credential parameters
+# Using environment variables (recommended)
+# Set OPENS3_ACCESS_KEY and OPENS3_SECRET_KEY environment variables
+s3 = opens3.client('s3', endpoint_url='http://localhost:8000')
+
+# Explicit credential parameters
 s3 = opens3.client('s3',
                   endpoint_url='http://localhost:8000',
-                  aws_access_key_id='admin',
-                  aws_secret_access_key='password')
+                  aws_access_key_id='admin',  # Also supports: access_key
+                  aws_secret_access_key='password')  # Also supports: secret_key
 
 # Direct auth tuple
 s3 = opens3.client('s3',
@@ -118,8 +122,10 @@ s3 = opens3.client('s3',
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `endpoint_url` | `str` | URL to the OpenS3 server | `'http://localhost:8000'` |
-| `aws_access_key_id` | `str` | Username for authentication | `'admin'` |
-| `aws_secret_access_key` | `str` | Password for authentication | `'password'` |
+| `access_key` | `str` | Username for authentication (from `OPENS3_ACCESS_KEY` env var) | `'admin'` |
+| `secret_key` | `str` | Password for authentication (from `OPENS3_SECRET_KEY` env var) | `'password'` |
+| `aws_access_key_id` | `str` | Alternate parameter name for username | `None` |
+| `aws_secret_access_key` | `str` | Alternate parameter name for password | `None` |
 | `auth` | `tuple` | Direct auth tuple `(username, password)` | `None` |
 
 ## Bucket Operations
@@ -161,6 +167,34 @@ response = s3.list_buckets()
     ],
     'Owner': {'ID': 'admin'}
 }
+```
+
+### Check if a Bucket Exists
+
+```python
+response = s3.head_bucket(Bucket='my-bucket')
+```
+
+**Parameters:**
+- `Bucket`: (Required) Name of the bucket to check
+
+**Returns:**
+- `True` if the bucket exists and the caller has permission to access it
+- `False` if the bucket does not exist
+
+**Raises:**
+- `HTTPError` if the caller does not have permission to access the bucket (403) or other errors
+
+**Example:**
+
+```python
+try:
+    if s3.head_bucket('my-bucket'):
+        print("Bucket exists and you have access")
+    else:
+        print("Bucket does not exist")
+except Exception as e:
+    print(f"Error checking bucket: {e}")
 ```
 
 ### Delete a Bucket

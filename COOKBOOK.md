@@ -38,8 +38,28 @@ import opens3
 # Connect with explicit credentials
 s3 = opens3.client('s3',
                   endpoint_url='http://localhost:8000',
+                  access_key='admin',  # Uses OPENS3_ACCESS_KEY env var if not specified
+                  secret_key='password')  # Uses OPENS3_SECRET_KEY env var if not specified
+
+# For backward compatibility, AWS-style parameters are also supported
+s3 = opens3.client('s3',
+                  endpoint_url='http://localhost:8000',
                   aws_access_key_id='admin',
                   aws_secret_access_key='password')
+```
+
+#### Connection with Environment Variables
+
+```python
+import opens3
+import os
+
+# Set environment variables
+os.environ['OPENS3_ACCESS_KEY'] = 'admin'
+os.environ['OPENS3_SECRET_KEY'] = 'password'
+
+# Connect using environment variables
+s3 = opens3.client('s3', endpoint_url='http://localhost:8000')
 ```
 
 #### Connection with Timeout Configuration
@@ -90,31 +110,48 @@ for bucket in response['Buckets']:
 
 ```python
 import opens3
-from opens3.exceptions import ClientError, NoSuchBucket
+from requests.exceptions import HTTPError
 
 s3 = opens3.client('s3', endpoint_url='http://localhost:8000')
 
 bucket_name = 'my-test-bucket'
 
+# Method 1: Using the new head_bucket method (Recommended)
+def check_bucket_exists(client, bucket_name):
+    """Check if a bucket exists using head_bucket"""
+    try:
+        return client.head_bucket(bucket_name)
+    except HTTPError as e:
+        # If it's a permission error (403), log and re-raise
+        if hasattr(e, 'response') and e.response.status_code == 403:
+            print(f"Permission denied for bucket: {bucket_name}")
+            raise
+        # For other errors, re-raise
+        raise
+
+# Method 2: Using list_objects_v2 as a fallback
 def bucket_exists(client, bucket_name):
-    """Check if a bucket exists"""
+    """Check if a bucket exists using list_objects_v2"""
     try:
         # Try to list objects (will fail if bucket doesn't exist)
         client.list_objects_v2(Bucket=bucket_name, MaxKeys=1)
         return True
-    except ClientError as e:
+    except Exception as e:
         # Check if the error is due to NoSuchBucket
-        if hasattr(e, 'response') and e.response.get('Error', {}).get('Code') == '404':
+        if hasattr(e, 'response') and getattr(e.response, 'status_code', 0) == 404:
             return False
         # If it's a different error, re-raise it
         raise
 
-# Check and create if needed
-if not bucket_exists(s3, bucket_name):
-    print(f"Bucket {bucket_name} doesn't exist, creating it...")
-    s3.create_bucket(Bucket=bucket_name)
-else:
-    print(f"Bucket {bucket_name} already exists")
+# Example usage
+try:
+    if check_bucket_exists(s3, bucket_name):
+        print(f"Bucket {bucket_name} exists")
+    else:
+        print(f"Bucket {bucket_name} doesn't exist, creating it...")
+        s3.create_bucket(Bucket=bucket_name)
+except Exception as e:
+    print(f"Error checking bucket: {e}")
 ```
 
 #### Delete All Buckets
