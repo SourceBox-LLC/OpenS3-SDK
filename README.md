@@ -76,8 +76,8 @@ import opens3
 # Initialize a client
 s3 = opens3.client('s3', 
                   endpoint_url='http://localhost:8000',
-                  aws_access_key_id='admin',
-                  aws_secret_access_key='password')
+                  access_key='admin',  # Uses OPENS3_ACCESS_KEY env var if not specified
+                  secret_key='password')  # Uses OPENS3_SECRET_KEY env var if not specified
 
 # Create a bucket
 s3.create_bucket(Bucket='my-bucket')
