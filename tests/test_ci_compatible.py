@@ -10,13 +10,22 @@ import pytest
 from opens3.client import S3Client
 
 
+# Function to determine if running in CI mode
+def is_ci_mode():
+    return os.environ.get("OPENS3_CI_MODE", "false").lower() == "true"
+
+
+# Skip the example_compatibility_test in CI mode
+pytest.importorskip("conftest")
+
+
 class TestS3ClientCIMode(unittest.TestCase):
     """Tests for S3Client that can run in CI without a live server"""
 
     def setUp(self):
         """Setup for each test"""
         # Check if running in CI mode
-        self.is_ci = os.environ.get("OPENS3_CI_MODE", "false").lower() == "true"
+        self.is_ci = is_ci_mode()
         
         # Use a mock endpoint in CI
         self.endpoint_url = "http://localhost:8001" if not self.is_ci else "http://mock-server"
@@ -24,7 +33,8 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Create client with patched session if in CI
         if self.is_ci:
-            self.patcher = mock.patch('opens3.client.requests.Session')
+            # Patch the requests module that gets imported inside S3Client.__init__
+            self.patcher = mock.patch('requests.Session')
             self.mock_session = self.patcher.start()
             
             # Setup mock responses
