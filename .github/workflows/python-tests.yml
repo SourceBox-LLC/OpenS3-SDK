@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      OPENS3_CI_MODE: "true"
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', 3.11]
@@ -24,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-mock
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
     
@@ -37,4 +39,5 @@ jobs:
     
     - name: Test with pytest
       run: |
+        # Run tests with mock server responses in CI mode
         pytest
