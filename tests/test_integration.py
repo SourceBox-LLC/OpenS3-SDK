@@ -180,7 +180,7 @@ class TestS3ClientIntegration(unittest.TestCase):
         # Create test directory in bucket
         self.client.create_directory(
             Bucket=self.test_bucket,
-            directory="test_directory"
+            DirectoryPath="test_directory"
         )
         
         # Upload directory
