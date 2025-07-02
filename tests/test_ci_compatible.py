@@ -52,8 +52,8 @@ class TestS3ClientCIMode(unittest.TestCase):
             self.list_buckets_response.status_code = 200
             self.list_buckets_response.json.return_value = {
                 "buckets": [
-                    {"name": "test-bucket-1", "creation_date": "2025-07-01T00:00:00Z"},
-                    {"name": "test-bucket-2", "creation_date": "2025-07-02T00:00:00Z"}
+                    {"name": "test-bucket-1", "creation_date": "2025-07-01T00:00:00"},
+                    {"name": "test-bucket-2", "creation_date": "2025-07-02T00:00:00"}
                 ]
             }
             
