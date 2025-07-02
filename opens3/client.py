@@ -84,13 +84,25 @@ class S3Client:
             raise http_error
         
         # For some calls like get_object, we might not want to parse as JSON
-        # Only treat it as a file download if the path matches /buckets/{bucket}/objects/{key}
-        # where {key} is a specific object key
+        # Identify download requests by path pattern and query parameters
+        is_download_request = False
+        
+        # Old format: /buckets/{bucket}/objects/{key}
         if (method.lower() == 'get' and 
             path.startswith('/buckets/') and 
             '/objects/' in path and 
             # Don't treat the general list objects endpoint as a download
             not path.endswith('/objects')):
+            is_download_request = True
+        
+        # New format: /buckets/{bucket}/object with object_key query parameter
+        if (method.lower() == 'get' and 
+            path.startswith('/buckets/') and 
+            path.endswith('/object') and
+            kwargs.get('params', {}).get('object_key')):
+            is_download_request = True
+            
+        if is_download_request:
             # This is a download_object call for a specific object
             return {
                 'Body': response,
@@ -159,21 +171,45 @@ class S3Client:
             'Owner': {'ID': 'admin'}  # Placeholder
         }
     
-    def delete_bucket(self, Bucket):
+    def delete_bucket(self, Bucket, ForceEmpty=False):
         """
         Delete a bucket.
         
         Parameters
         ----------
         Bucket : str
-            The name of the bucket to delete.
+            The name of the bucket.
+        ForceEmpty : bool, optional
+            If True, forcefully empties the bucket before attempting deletion.
             
         Returns
         -------
         dict
             Response metadata.
         """
-        response = self._make_api_call('delete', f'/buckets/{Bucket}')
+        if ForceEmpty:
+            # Force delete all objects to ensure bucket is empty
+            try:
+                # List all objects without delimiter to get everything
+                response = self.list_objects_v2(Bucket=Bucket)
+                
+                # Delete all objects
+                if response.get('Contents'):
+                    for obj in response['Contents']:
+                        self.delete_object(Bucket=Bucket, Key=obj['Key'])
+                        
+                # Wait a moment for consistency
+                import time
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Warning: Error while force-emptying bucket: {e}")
+                
+        # Now attempt to delete the bucket
+        params = {}
+        if ForceEmpty:
+            params['force'] = True
+            
+        response = self._make_api_call('delete', f'/buckets/{Bucket}', params=params)
         
         # Convert to boto3-like response
         return {
@@ -284,9 +320,9 @@ class S3Client:
             }
         }
     
-    def list_objects_v2(self, Bucket, Prefix=None):
+    def list_objects_v2(self, Bucket, Prefix=None, Delimiter=None):
         """
-        List objects in a bucket.
+        List objects in a bucket with support for directory-like hierarchies.
         
         Parameters
         ----------
@@ -294,15 +330,21 @@ class S3Client:
             The name of the bucket.
         Prefix : str, optional
             Only return objects that start with this prefix.
+        Delimiter : str, optional
+            Character used to group keys (typically '/').
+            When specified, the response will include CommonPrefixes,
+            which are keys between the Prefix and the Delimiter.
             
         Returns
         -------
         dict
-            A dictionary containing a list of objects.
+            A dictionary containing a list of objects and common prefixes.
         """
         params = {}
         if Prefix:
             params['prefix'] = Prefix
+        if Delimiter:
+            params['delimiter'] = Delimiter
             
         response = self._make_api_call(
             'get',
@@ -338,6 +380,158 @@ class S3Client:
             'IsTruncated': False  # OpenS3 doesn't paginate yet
         }
     
+    def create_directory(self, Bucket, DirectoryPath):
+        """Create a directory in a bucket.
+        
+        This is an OpenS3 extension method for intuitive directory management.
+        For S3-compatible code, you can also use put_object with a key ending in '/' and empty content.
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket.
+        DirectoryPath : str
+            The path of the directory to create. Should end with a '/'.
+            
+        Returns
+        -------
+        dict
+            Response metadata.
+        """
+        if not DirectoryPath.endswith('/'):
+            DirectoryPath = DirectoryPath + '/'
+            
+        # Use the OpenS3 dedicated directory endpoint
+        params = {
+            'directory_path': DirectoryPath
+        }
+        
+        response = self._make_api_call('post', f'/buckets/{Bucket}/directories', params=params)
+        
+        # Convert to boto3-like response
+        return {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 201
+            }
+        }
+        
+    def create_directory_s3_style(self, Bucket, DirectoryPath):
+        """Create a directory in an S3-compatible way (by creating a zero-byte object with trailing slash).
+        
+        This method provides maximum compatibility with code written for AWS S3/boto3.
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket.
+        DirectoryPath : str
+            The path of the directory to create. Should end with a '/'.
+            
+        Returns
+        -------
+        dict
+            Response metadata.
+        """
+        if not DirectoryPath.endswith('/'):
+            DirectoryPath = DirectoryPath + '/'
+            
+        # Use the standard put_object method with zero-byte content
+        return self.put_object(
+            Bucket=Bucket,
+            Key=DirectoryPath,
+            Body=b""
+        )
+    
+    def upload_directory(self, local_directory, Bucket, Key=""):
+        """Upload a directory and its contents to a bucket
+        
+        Parameters
+        ----------
+        local_directory : str
+            The local directory to upload
+        Bucket : str
+            The name of the bucket
+        Key : str
+            The key prefix to use for the directory in the bucket
+            
+        Returns
+        -------
+        dict
+            Dictionary with upload statistics
+        """
+        import os
+        
+        if not os.path.isdir(local_directory):
+            raise ValueError(f"'{local_directory}' is not a directory")
+            
+        # Normalize paths
+        local_directory = os.path.normpath(local_directory)
+        
+        # Strip trailing slash from prefix if present
+        if Key and Key.endswith('/'):
+            Key = Key[:-1]
+            
+        # Create the root directory marker if needed
+        if Key:
+            try:
+                self.create_directory(Bucket=Bucket, DirectoryPath=Key)
+            except Exception as e:
+                # If directory already exists, continue
+                print(f"Warning: {e}")
+        
+        stats = {
+            'files_uploaded': 0,
+            'directories_created': 0,
+            'failed_uploads': 0
+        }
+        
+        # Walk directory tree and upload files
+        for root, dirs, files in os.walk(local_directory):
+            # Calculate relative path from local_directory
+            rel_path = os.path.relpath(root, local_directory)
+            if rel_path == '.':
+                rel_path = ''
+                
+            # Create subdirectories in bucket
+            for dir_name in dirs:
+                dir_path = os.path.join(rel_path, dir_name).replace('\\', '/')
+                if Key:
+                    dir_path = f"{Key}/{dir_path}"
+                
+                try:
+                    self.create_directory(Bucket=Bucket, DirectoryPath=dir_path)
+                    stats['directories_created'] += 1
+                except Exception as e:
+                    # If directory already exists, continue
+                    print(f"Warning: Failed to create directory '{dir_path}': {e}")
+            
+            # Upload files in current directory
+            for file_name in files:
+                local_file_path = os.path.join(root, file_name)
+                s3_key = os.path.join(rel_path, file_name).replace('\\', '/')
+                
+                if Key:
+                    s3_key = f"{Key}/{s3_key}"
+                
+                # Ensure parent directory exists on server before uploading file
+                parent_dir = os.path.dirname(s3_key)
+                if parent_dir:
+                    try:
+                        # Create the parent directory first (will be no-op if it already exists)
+                        self.create_directory(Bucket=Bucket, DirectoryPath=parent_dir)
+                    except Exception as e:
+                        print(f"Warning: Failed to create parent directory '{parent_dir}': {e}")
+                        # Continue anyway, the upload might still work
+                
+                try:
+                    self.upload_file(local_file_path, Bucket=Bucket, Key=s3_key)
+                    stats['files_uploaded'] += 1
+                except Exception as e:
+                    print(f"Warning: Failed to upload '{local_file_path}' to '{s3_key}': {e}")
+                    stats['failed_uploads'] += 1
+        
+        return stats
+    
     def get_object(self, Bucket, Key):
         """
         Retrieve an object from a bucket.
@@ -352,42 +546,226 @@ class S3Client:
         Returns
         -------
         dict
-            The object data and metadata.
+            The object data and metadata, with a 'Body' key containing the object content.
         """
-        response = self._make_api_call('get', f'/buckets/{Bucket}/objects/{Key}')
+        # Use the new /buckets/{bucket_name}/object endpoint with query parameters
+        # This endpoint is specifically for downloading objects and handles slashes correctly
+        params = {
+            'object_key': Key
+        }
+        response = self._make_api_call('get', f'/buckets/{Bucket}/object', params=params)
         
-        # The _make_api_call method handles the specific case of get_object
+        # Add detailed debugging
+        print(f"DEBUG - SDK get_object raw response: {response}")
+        print(f"DEBUG - SDK get_object response type: {type(response)}")
+        
+        # Create boto3-compatible response format
+        # For binary content from FileResponse, we need to wrap it in a Body-like object
+        if isinstance(response, bytes):
+            # Direct bytes response from server, wrap it in a boto3-style response
+            class StreamingBody:
+                def __init__(self, content):
+                    self.content = content
+                
+                def read(self):
+                    return self.content
+                
+                def __str__(self):
+                    try:
+                        return self.content.decode('utf-8')
+                    except UnicodeDecodeError:
+                        return str(self.content)
+            
+            result = {
+                'Body': StreamingBody(response),
+                'ContentLength': len(response),
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 200
+                }
+            }
+            print(f"DEBUG - SDK get_object formatted response with Body")
+            return result
+        
+        # If we got something unexpected, try to make it compatible
+        if isinstance(response, dict):
+            # If it's a dict but doesn't have 'Body', add a placeholder
+            if 'Body' not in response:
+                class DummyBody:
+                    def __init__(self, content=""):
+                        # Ensure content is bytes, not str
+                        if isinstance(content, str):
+                            self.content = content.encode('utf-8')
+                        else:
+                            self.content = content if content else b''
+                    def read(self):
+                        return self.content
+                    def __str__(self):
+                        return str(self.content)
+                
+                # Create a binary representation of the response for compatibility
+                response['Body'] = DummyBody(f"Unexpected response format: {response}".encode('utf-8'))
+                print(f"DEBUG - SDK get_object added dummy Body to dict response")
+        else:
+            # If it's neither bytes nor dict, wrap the whole thing
+            class DummyBody:
+                def __init__(self, content):
+                    # Ensure content is bytes, not str
+                    if isinstance(content, str):
+                        self.content = content.encode('utf-8')
+                    elif content is None:
+                        self.content = b''
+                    else:
+                        self.content = content
+                def read(self):
+                    return self.content
+                def __str__(self):
+                    if isinstance(self.content, bytes):
+                        try:
+                            return self.content.decode('utf-8')
+                        except UnicodeDecodeError:
+                            return str(self.content)
+                    return str(self.content)
+            
+            response = {
+                'Body': DummyBody(response),
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 200 if response is not None else 404
+                }
+            }
+            print(f"DEBUG - SDK get_object wrapped non-dict response")
+        
         return response
     
     def download_file(self, Bucket, Key, Filename):
-        """
-        Download an object from a bucket to a file.
+        """Download a file from a bucket
         
         Parameters
         ----------
         Bucket : str
-            The name of the bucket.
+            The name of the bucket
         Key : str
-            The key of the object.
+            The key of the object
         Filename : str
-            The path to save the object to.
+            The local filename to download to
             
         Returns
         -------
         dict
-            Response metadata.
+            Response metadata
         """
+        # Use get_object which now handles keys with slashes correctly via query parameters
         response = self.get_object(Bucket, Key)
         
-        # Save the content to the file
+        # Add debugging for troubleshooting directory operations
+        print(f"DEBUG - SDK download_file for '{Key}' response status: {response.get('status', 'Unknown')}")
+        
+        # Ensure the destination directory exists
+        import os
+        os.makedirs(os.path.dirname(Filename) or '.', exist_ok=True)
+        
+        # Save the file
         with open(Filename, 'wb') as f:
-            f.write(response['Body'].content)
+            for chunk in response['Body'].iter_content(chunk_size=8192):
+                f.write(chunk)
         
         return {
             'ResponseMetadata': {
                 'HTTPStatusCode': 200
             }
         }
+        
+    def download_directory(self, Bucket, Key, local_directory=None, LocalPath=None):
+        """Download a directory and its contents from a bucket
+        
+        Parameters
+        ----------
+        Bucket : str
+            The name of the bucket
+        Key : str
+            The key prefix of the directory in the bucket
+        local_directory : str
+            The local directory to download to (alternatively use LocalPath)
+        LocalPath : str
+            Alias for local_directory (for compatibility with test scripts)
+            
+        Returns
+        -------
+        dict
+            Dictionary with download statistics
+        """
+        # Handle parameter alias
+        if LocalPath is not None:
+            local_directory = LocalPath
+        
+        if local_directory is None:
+            raise ValueError("Either local_directory or LocalPath must be provided")
+        import os
+        
+        # Ensure the directory exists and normalize it
+        os.makedirs(local_directory, exist_ok=True)
+        local_directory = os.path.normpath(local_directory)
+        
+        # Ensure key ends with / for directory listings
+        directory_prefix = Key
+        if directory_prefix and not directory_prefix.endswith('/'):
+            directory_prefix += '/'
+            
+        # List all objects with the given prefix
+        response = self.list_objects_v2(Bucket=Bucket, Prefix=directory_prefix, Delimiter='/')
+        
+        stats = {
+            'files_downloaded': 0,
+            'directories_created': 0,
+            'failed_downloads': 0
+        }
+        
+        # Process directories (CommonPrefixes)
+        if 'CommonPrefixes' in response:
+            for prefix in response['CommonPrefixes']:
+                sub_dir = prefix['Prefix']
+                # Extract relative directory name
+                rel_dir = sub_dir
+                if directory_prefix:
+                    rel_dir = sub_dir[len(directory_prefix):]
+                
+                # Create local subdirectory
+                sub_local_dir = os.path.join(local_directory, rel_dir)
+                os.makedirs(sub_local_dir, exist_ok=True)
+                stats['directories_created'] += 1
+                
+                # Recursively download subdirectory
+                sub_stats = self.download_directory(Bucket, sub_dir, sub_local_dir)
+                stats['files_downloaded'] += sub_stats['files_downloaded']
+                stats['directories_created'] += sub_stats['directories_created']
+                stats['failed_downloads'] += sub_stats['failed_downloads']
+        
+        # Process files (Contents)
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                object_key = obj['Key']
+                # Skip directory markers
+                if object_key.endswith('/'):
+                    continue
+                    
+                # Extract relative file path
+                rel_path = object_key
+                if directory_prefix:
+                    rel_path = object_key[len(directory_prefix):]
+                
+                # Construct local file path
+                local_file_path = os.path.join(local_directory, rel_path)
+                
+                try:
+                    # Ensure parent directory exists
+                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                    # Download file
+                    self.download_file(Bucket=Bucket, Key=object_key, Filename=local_file_path)
+                    stats['files_downloaded'] += 1
+                except Exception as e:
+                    print(f"Warning: Failed to download '{object_key}' to '{local_file_path}': {e}")
+                    stats['failed_downloads'] += 1
+        
+        return stats
     
     def delete_object(self, Bucket, Key):
         """
@@ -405,7 +783,14 @@ class S3Client:
         dict
             Response metadata.
         """
-        response = self._make_api_call('delete', f'/buckets/{Bucket}/objects/{Key}')
+        # Use query parameters instead of path parameters for the object key
+        # This allows for keys with slashes (directories) to work correctly
+        params = {
+            'object_key': Key
+        }
+        response = self._make_api_call('delete', f'/buckets/{Bucket}/objects', params=params)
+        
+        print(f"DEBUG - SDK delete_object response: {response}")
         
         # Convert to boto3-like response
         return {
