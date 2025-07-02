@@ -1,0 +1,7 @@
+example\_compatibility\_test module
+===================================
+
+.. automodule:: example_compatibility_test
+   :members:
+   :undoc-members:
+   :show-inheritance:

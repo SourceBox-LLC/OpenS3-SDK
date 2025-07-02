@@ -1,0 +1,1068 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>opens3.client &mdash; OpenS3 SDK  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            OpenS3 SDK
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">OpenS3 SDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../opens3.html">opens3</a></li>
+      <li class="breadcrumb-item active">opens3.client</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for opens3.client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">OpenS3 Client Implementation.</span>
+
+<span class="sd">This module provides the client classes for interacting with OpenS3 services.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urljoin</span>
+
+
+<div class="viewcode-block" id="S3Client">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">S3Client</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A low-level client for OpenS3&#39;s S3-compatible interface.</span>
+<span class="sd">    </span>
+<span class="sd">    This client mimics the boto3 S3 client interface for seamless transition</span>
+<span class="sd">    from AWS S3 to OpenS3.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint_url</span><span class="p">,</span> <span class="n">auth</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a new S3Client.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        endpoint_url : str</span>
+<span class="sd">            The URL to the OpenS3 service.</span>
+<span class="sd">        auth : tuple</span>
+<span class="sd">            A tuple of (username, password) for HTTP Basic Auth.</span>
+<span class="sd">        session : requests.Session, optional</span>
+<span class="sd">            A requests session to use. If not provided, a new one will be created.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span> <span class="o">=</span> <span class="n">endpoint_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth</span> <span class="o">=</span> <span class="n">auth</span>
+        
+        <span class="k">if</span> <span class="n">session</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_api_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make an API call to the OpenS3 service.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        method : str</span>
+<span class="sd">            The HTTP method to use.</span>
+<span class="sd">        path : str</span>
+<span class="sd">            The path to the resource.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional arguments to pass to requests.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The parsed JSON response.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urljoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        
+        <span class="c1"># Instead of raising, handle error responses</span>
+        <span class="k">if</span> <span class="mi">400</span> <span class="o">&lt;=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">600</span><span class="p">:</span>
+            <span class="n">error_detail</span> <span class="o">=</span> <span class="s1">&#39;Unknown error&#39;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Try to extract detailed error message from JSON response</span>
+                <span class="n">error_json</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;detail&#39;</span> <span class="ow">in</span> <span class="n">error_json</span><span class="p">:</span>
+                    <span class="n">error_detail</span> <span class="o">=</span> <span class="n">error_json</span><span class="p">[</span><span class="s1">&#39;detail&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="s1">&#39;message&#39;</span> <span class="ow">in</span> <span class="n">error_json</span><span class="p">:</span>
+                    <span class="n">error_detail</span> <span class="o">=</span> <span class="n">error_json</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># Fallback if we can&#39;t parse JSON</span>
+                <span class="n">error_detail</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span> <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span> <span class="k">else</span> <span class="n">response</span><span class="o">.</span><span class="n">reason</span>
+                
+            <span class="c1"># Create a requests HTTPError with the detailed message</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">requests.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTTPError</span>
+            <span class="n">http_error</span> <span class="o">=</span> <span class="n">HTTPError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error_detail</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
+            <span class="n">http_error</span><span class="o">.</span><span class="n">detail</span> <span class="o">=</span> <span class="n">error_detail</span>  <span class="c1"># Add detail as an attribute for easier access</span>
+            <span class="n">http_error</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
+            <span class="k">raise</span> <span class="n">http_error</span>
+        
+        <span class="c1"># For some calls like get_object, we might not want to parse as JSON</span>
+        <span class="c1"># Identify download requests by path pattern and query parameters</span>
+        <span class="n">is_download_request</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># Old format: /buckets/{bucket}/objects/{key}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;get&#39;</span> <span class="ow">and</span> 
+            <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/buckets/&#39;</span><span class="p">)</span> <span class="ow">and</span> 
+            <span class="s1">&#39;/objects/&#39;</span> <span class="ow">in</span> <span class="n">path</span> <span class="ow">and</span> 
+            <span class="c1"># Don&#39;t treat the general list objects endpoint as a download</span>
+            <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/objects&#39;</span><span class="p">)):</span>
+            <span class="n">is_download_request</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="c1"># New format: /buckets/{bucket}/object with object_key query parameter</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;get&#39;</span> <span class="ow">and</span> 
+            <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/buckets/&#39;</span><span class="p">)</span> <span class="ow">and</span> 
+            <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/object&#39;</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;object_key&#39;</span><span class="p">)):</span>
+            <span class="n">is_download_request</span> <span class="o">=</span> <span class="kc">True</span>
+            
+        <span class="k">if</span> <span class="n">is_download_request</span><span class="p">:</span>
+            <span class="c1"># This is a download_object call for a specific object</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;Body&#39;</span><span class="p">:</span> <span class="n">response</span><span class="p">,</span>
+                <span class="s1">&#39;ContentLength&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">),</span>
+                <span class="s1">&#39;LastModified&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>  <span class="c1"># Placeholder</span>
+                <span class="s1">&#39;ContentType&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># Not a JSON response</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">}}</span>
+    
+<div class="viewcode-block" id="S3Client.create_bucket">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.create_bucket">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a new bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket to create.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+            <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/buckets&#39;</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">Bucket</span><span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">201</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;Location&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.list_buckets">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.list_buckets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_buckets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List all buckets.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing a list of buckets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="s1">&#39;/buckets&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="n">buckets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;buckets&#39;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">buckets</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="n">bucket</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;CreationDate&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">bucket</span><span class="p">[</span><span class="s1">&#39;creation_date&#39;</span><span class="p">])</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bucket</span><span class="p">[</span><span class="s1">&#39;creation_date&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> 
+                                <span class="k">else</span> <span class="n">bucket</span><span class="p">[</span><span class="s1">&#39;creation_date&#39;</span><span class="p">]</span>
+            <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;Buckets&#39;</span><span class="p">:</span> <span class="n">buckets</span><span class="p">,</span>
+            <span class="s1">&#39;Owner&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="s1">&#39;admin&#39;</span><span class="p">}</span>  <span class="c1"># Placeholder</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.delete_bucket">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.delete_bucket">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">ForceEmpty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        ForceEmpty : bool, optional</span>
+<span class="sd">            If True, forcefully empties the bucket before attempting deletion.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">ForceEmpty</span><span class="p">:</span>
+            <span class="c1"># Force delete all objects to ensure bucket is empty</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># List all objects without delimiter to get everything</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">)</span>
+                
+                <span class="c1"># Delete all objects</span>
+                <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Contents&#39;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Contents&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">delete_object</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;Key&#39;</span><span class="p">])</span>
+                        
+                <span class="c1"># Wait a moment for consistency</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Error while force-emptying bucket: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+        <span class="c1"># Now attempt to delete the bucket</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">ForceEmpty</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;force&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">200</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.put_object">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.put_object">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">put_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Body</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add an object to a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key (name) of the object.</span>
+<span class="sd">        Body : bytes or file-like object</span>
+<span class="sd">            The content of the object.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional parameters like ContentType, Metadata, etc.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># For direct content upload, we need to create a temporary file</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">Body</span><span class="p">,</span> <span class="s1">&#39;read&#39;</span><span class="p">):</span>
+                <span class="c1"># File-like object</span>
+                <span class="n">temp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Body</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Bytes or string</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Body</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">Body</span> <span class="o">=</span> <span class="n">Body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="n">temp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Body</span><span class="p">)</span>
+            <span class="n">temp_path</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">name</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Now upload the temp file</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Key</span><span class="p">,</span> <span class="n">f</span><span class="p">)}</span>
+                
+                <span class="c1"># Handle additional metadata if provided</span>
+                <span class="n">json_data</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="s1">&#39;Metadata&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                    <span class="n">json_data</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;Metadata&#39;</span><span class="p">]</span>
+                
+                <span class="c1"># Only include json parameter if we have metadata</span>
+                <span class="k">if</span> <span class="n">json_data</span><span class="p">:</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+                        <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects&#39;</span><span class="p">,</span>
+                        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+                        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;json&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json_data</span><span class="p">)}</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+                        <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects&#39;</span><span class="p">,</span>
+                        <span class="n">files</span><span class="o">=</span><span class="n">files</span>
+                    <span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Clean up</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">201</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;ETag&#39;</span><span class="p">:</span> <span class="s1">&#39;&quot;fake-etag&quot;&#39;</span>  <span class="c1"># OpenS3 doesn&#39;t provide ETags yet</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.upload_file">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.upload_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">upload_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Filename</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upload a file to a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Filename : str</span>
+<span class="sd">            The path to the file to upload.</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key (name) to give the object in the bucket.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">Filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">Filename</span><span class="p">),</span> <span class="n">f</span><span class="p">)}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+                <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects&#39;</span><span class="p">,</span>
+                <span class="n">files</span><span class="o">=</span><span class="n">files</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">201</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.list_objects_v2">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.list_objects_v2">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_objects_v2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Delimiter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List objects in a bucket with support for directory-like hierarchies.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Prefix : str, optional</span>
+<span class="sd">            Only return objects that start with this prefix.</span>
+<span class="sd">        Delimiter : str, optional</span>
+<span class="sd">            Character used to group keys (typically &#39;/&#39;).</span>
+<span class="sd">            When specified, the response will include CommonPrefixes,</span>
+<span class="sd">            which are keys between the Prefix and the Delimiter.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing a list of objects and common prefixes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">Prefix</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Prefix</span>
+        <span class="k">if</span> <span class="n">Delimiter</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;delimiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Delimiter</span>
+            
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+            <span class="s1">&#39;get&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects&#39;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Print the actual response for debugging</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK received from server: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;objects&#39;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">contents</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;Key&#39;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;LastModified&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;last_modified&#39;</span><span class="p">])</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;last_modified&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> 
+                                <span class="k">else</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;last_modified&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;Size&#39;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;ETag&#39;</span><span class="p">:</span> <span class="s1">&#39;&quot;fake-etag&quot;&#39;</span><span class="p">,</span>  <span class="c1"># OpenS3 doesn&#39;t provide ETags yet</span>
+                <span class="s1">&#39;StorageClass&#39;</span><span class="p">:</span> <span class="s1">&#39;STANDARD&#39;</span>  <span class="c1"># OpenS3 doesn&#39;t have storage classes</span>
+            <span class="p">})</span>
+        
+        <span class="c1"># Print the contents list being returned</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK returning contents: </span><span class="si">{</span><span class="n">contents</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;Contents&#39;</span><span class="p">:</span> <span class="n">contents</span><span class="p">,</span>
+            <span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="n">Bucket</span><span class="p">,</span>
+            <span class="s1">&#39;Prefix&#39;</span><span class="p">:</span> <span class="n">Prefix</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;MaxKeys&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>  <span class="c1"># Default in boto3</span>
+            <span class="s1">&#39;KeyCount&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">contents</span><span class="p">),</span>
+            <span class="s1">&#39;IsTruncated&#39;</span><span class="p">:</span> <span class="kc">False</span>  <span class="c1"># OpenS3 doesn&#39;t paginate yet</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.create_directory">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.create_directory">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">DirectoryPath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a directory in a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        This is an OpenS3 extension method for intuitive directory management.</span>
+<span class="sd">        For S3-compatible code, you can also use put_object with a key ending in &#39;/&#39; and empty content.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        DirectoryPath : str</span>
+<span class="sd">            The path of the directory to create. Should end with a &#39;/&#39;.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">DirectoryPath</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">DirectoryPath</span> <span class="o">=</span> <span class="n">DirectoryPath</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+            
+        <span class="c1"># Use the OpenS3 dedicated directory endpoint</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;directory_path&#39;</span><span class="p">:</span> <span class="n">DirectoryPath</span>
+        <span class="p">}</span>
+        
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/directories&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">201</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+        
+<div class="viewcode-block" id="S3Client.create_directory_s3_style">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.create_directory_s3_style">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_directory_s3_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">DirectoryPath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a directory in an S3-compatible way (by creating a zero-byte object with trailing slash).</span>
+<span class="sd">        </span>
+<span class="sd">        This method provides maximum compatibility with code written for AWS S3/boto3.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        DirectoryPath : str</span>
+<span class="sd">            The path of the directory to create. Should end with a &#39;/&#39;.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">DirectoryPath</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">DirectoryPath</span> <span class="o">=</span> <span class="n">DirectoryPath</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+            
+        <span class="c1"># Use the standard put_object method with zero-byte content</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">put_object</span><span class="p">(</span>
+            <span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span>
+            <span class="n">Key</span><span class="o">=</span><span class="n">DirectoryPath</span><span class="p">,</span>
+            <span class="n">Body</span><span class="o">=</span><span class="sa">b</span><span class="s2">&quot;&quot;</span>
+        <span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.upload_directory">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.upload_directory">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">upload_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_directory</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Upload a directory and its contents to a bucket</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        local_directory : str</span>
+<span class="sd">            The local directory to upload</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key prefix to use for the directory in the bucket</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary with upload statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">local_directory</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">local_directory</span><span class="si">}</span><span class="s2">&#39; is not a directory&quot;</span><span class="p">)</span>
+            
+        <span class="c1"># Normalize paths</span>
+        <span class="n">local_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">local_directory</span><span class="p">)</span>
+        
+        <span class="c1"># Strip trailing slash from prefix if present</span>
+        <span class="k">if</span> <span class="n">Key</span> <span class="ow">and</span> <span class="n">Key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">Key</span> <span class="o">=</span> <span class="n">Key</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            
+        <span class="c1"># Create the root directory marker if needed</span>
+        <span class="k">if</span> <span class="n">Key</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_directory</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">DirectoryPath</span><span class="o">=</span><span class="n">Key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># If directory already exists, continue</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;files_uploaded&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;directories_created&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;failed_uploads&#39;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Walk directory tree and upload files</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">local_directory</span><span class="p">):</span>
+            <span class="c1"># Calculate relative path from local_directory</span>
+            <span class="n">rel_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">local_directory</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rel_path</span> <span class="o">==</span> <span class="s1">&#39;.&#39;</span><span class="p">:</span>
+                <span class="n">rel_path</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                
+            <span class="c1"># Create subdirectories in bucket</span>
+            <span class="k">for</span> <span class="n">dir_name</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rel_path</span><span class="p">,</span> <span class="n">dir_name</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">Key</span><span class="p">:</span>
+                    <span class="n">dir_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Key</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dir_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">create_directory</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">DirectoryPath</span><span class="o">=</span><span class="n">dir_path</span><span class="p">)</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;directories_created&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="c1"># If directory already exists, continue</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Failed to create directory &#39;</span><span class="si">{</span><span class="n">dir_path</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Upload files in current directory</span>
+            <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">local_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+                <span class="n">s3_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rel_path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">Key</span><span class="p">:</span>
+                    <span class="n">s3_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Key</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">s3_key</span><span class="si">}</span><span class="s2">&quot;</span>
+                
+                <span class="c1"># Ensure parent directory exists on server before uploading file</span>
+                <span class="n">parent_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">s3_key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">parent_dir</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1"># Create the parent directory first (will be no-op if it already exists)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">create_directory</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">DirectoryPath</span><span class="o">=</span><span class="n">parent_dir</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Failed to create parent directory &#39;</span><span class="si">{</span><span class="n">parent_dir</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="c1"># Continue anyway, the upload might still work</span>
+                
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">,</span> <span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="n">s3_key</span><span class="p">)</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;files_uploaded&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Failed to upload &#39;</span><span class="si">{</span><span class="n">local_file_path</span><span class="si">}</span><span class="s2">&#39; to &#39;</span><span class="si">{</span><span class="n">s3_key</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;failed_uploads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="n">stats</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.get_object">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.get_object">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve an object from a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key of the object.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The object data and metadata, with a &#39;Body&#39; key containing the object content.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use the new /buckets/{bucket_name}/object endpoint with query parameters</span>
+        <span class="c1"># This endpoint is specifically for downloading objects and handles slashes correctly</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;object_key&#39;</span><span class="p">:</span> <span class="n">Key</span>
+        <span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/object&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        
+        <span class="c1"># Add detailed debugging</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK get_object raw response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK get_object response type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">response</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Create boto3-compatible response format</span>
+        <span class="c1"># For binary content from FileResponse, we need to wrap it in a Body-like object</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+            <span class="c1"># Direct bytes response from server, wrap it in a boto3-style response</span>
+            <span class="k">class</span><span class="w"> </span><span class="nc">StreamingBody</span><span class="p">:</span>
+                <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+                
+                <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
+                
+                <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;Body&#39;</span><span class="p">:</span> <span class="n">StreamingBody</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
+                <span class="s1">&#39;ContentLength&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
+                <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">200</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK get_object formatted response with Body&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+        
+        <span class="c1"># If we got something unexpected, try to make it compatible</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># If it&#39;s a dict but doesn&#39;t have &#39;Body&#39;, add a placeholder</span>
+            <span class="k">if</span> <span class="s1">&#39;Body&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="k">class</span><span class="w"> </span><span class="nc">DummyBody</span><span class="p">:</span>
+                    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+                        <span class="c1"># Ensure content is bytes, not str</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span> <span class="k">if</span> <span class="n">content</span> <span class="k">else</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+                    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
+                    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+                
+                <span class="c1"># Create a binary representation of the response for compatibility</span>
+                <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DummyBody</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response format: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK get_object added dummy Body to dict response&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If it&#39;s neither bytes nor dict, wrap the whole thing</span>
+            <span class="k">class</span><span class="w"> </span><span class="nc">DummyBody</span><span class="p">:</span>
+                <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+                    <span class="c1"># Ensure content is bytes, not str</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+                <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
+                <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            
+            <span class="n">response</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;Body&#39;</span><span class="p">:</span> <span class="n">DummyBody</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
+                <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">200</span> <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">404</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK get_object wrapped non-dict response&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">response</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.download_file">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.download_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Filename</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download a file from a bucket</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key of the object</span>
+<span class="sd">        Filename : str</span>
+<span class="sd">            The local filename to download to</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use get_object which now handles keys with slashes correctly via query parameters</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">)</span>
+        
+        <span class="c1"># Add debugging for troubleshooting directory operations</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK download_file for &#39;</span><span class="si">{</span><span class="n">Key</span><span class="si">}</span><span class="s2">&#39; response status: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Unknown&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Ensure the destination directory exists</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">Filename</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1"># Save the file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">Filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">200</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+        
+<div class="viewcode-block" id="S3Client.download_directory">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.download_directory">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">,</span> <span class="n">local_directory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">LocalPath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download a directory and its contents from a bucket</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key prefix of the directory in the bucket</span>
+<span class="sd">        local_directory : str</span>
+<span class="sd">            The local directory to download to (alternatively use LocalPath)</span>
+<span class="sd">        LocalPath : str</span>
+<span class="sd">            Alias for local_directory (for compatibility with test scripts)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary with download statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Handle parameter alias</span>
+        <span class="k">if</span> <span class="n">LocalPath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">local_directory</span> <span class="o">=</span> <span class="n">LocalPath</span>
+        
+        <span class="k">if</span> <span class="n">local_directory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either local_directory or LocalPath must be provided&quot;</span><span class="p">)</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+        
+        <span class="c1"># Ensure the directory exists and normalize it</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">local_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">local_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">local_directory</span><span class="p">)</span>
+        
+        <span class="c1"># Ensure key ends with / for directory listings</span>
+        <span class="n">directory_prefix</span> <span class="o">=</span> <span class="n">Key</span>
+        <span class="k">if</span> <span class="n">directory_prefix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">directory_prefix</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">directory_prefix</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+            
+        <span class="c1"># List all objects with the given prefix</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="n">directory_prefix</span><span class="p">,</span> <span class="n">Delimiter</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;files_downloaded&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;directories_created&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;failed_downloads&#39;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Process directories (CommonPrefixes)</span>
+        <span class="k">if</span> <span class="s1">&#39;CommonPrefixes&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;CommonPrefixes&#39;</span><span class="p">]:</span>
+                <span class="n">sub_dir</span> <span class="o">=</span> <span class="n">prefix</span><span class="p">[</span><span class="s1">&#39;Prefix&#39;</span><span class="p">]</span>
+                <span class="c1"># Extract relative directory name</span>
+                <span class="n">rel_dir</span> <span class="o">=</span> <span class="n">sub_dir</span>
+                <span class="k">if</span> <span class="n">directory_prefix</span><span class="p">:</span>
+                    <span class="n">rel_dir</span> <span class="o">=</span> <span class="n">sub_dir</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">directory_prefix</span><span class="p">):]</span>
+                
+                <span class="c1"># Create local subdirectory</span>
+                <span class="n">sub_local_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">local_directory</span><span class="p">,</span> <span class="n">rel_dir</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">sub_local_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;directories_created&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="c1"># Recursively download subdirectory</span>
+                <span class="n">sub_stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">download_directory</span><span class="p">(</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">sub_dir</span><span class="p">,</span> <span class="n">sub_local_dir</span><span class="p">)</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;files_downloaded&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sub_stats</span><span class="p">[</span><span class="s1">&#39;files_downloaded&#39;</span><span class="p">]</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;directories_created&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sub_stats</span><span class="p">[</span><span class="s1">&#39;directories_created&#39;</span><span class="p">]</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;failed_downloads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sub_stats</span><span class="p">[</span><span class="s1">&#39;failed_downloads&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Process files (Contents)</span>
+        <span class="k">if</span> <span class="s1">&#39;Contents&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Contents&#39;</span><span class="p">]:</span>
+                <span class="n">object_key</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;Key&#39;</span><span class="p">]</span>
+                <span class="c1"># Skip directory markers</span>
+                <span class="k">if</span> <span class="n">object_key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                    
+                <span class="c1"># Extract relative file path</span>
+                <span class="n">rel_path</span> <span class="o">=</span> <span class="n">object_key</span>
+                <span class="k">if</span> <span class="n">directory_prefix</span><span class="p">:</span>
+                    <span class="n">rel_path</span> <span class="o">=</span> <span class="n">object_key</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">directory_prefix</span><span class="p">):]</span>
+                
+                <span class="c1"># Construct local file path</span>
+                <span class="n">local_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">local_directory</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">)</span>
+                
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Ensure parent directory exists</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="c1"># Download file</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="n">object_key</span><span class="p">,</span> <span class="n">Filename</span><span class="o">=</span><span class="n">local_file_path</span><span class="p">)</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;files_downloaded&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Failed to download &#39;</span><span class="si">{</span><span class="n">object_key</span><span class="si">}</span><span class="s2">&#39; to &#39;</span><span class="si">{</span><span class="n">local_file_path</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;failed_downloads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="n">stats</span></div>
+
+    
+<div class="viewcode-block" id="S3Client.delete_object">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.delete_object">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete an object from a bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key of the object.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Response metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use query parameters instead of path parameters for the object key</span>
+        <span class="c1"># This allows for keys with slashes (directories) to work correctly</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;object_key&#39;</span><span class="p">:</span> <span class="n">Key</span>
+        <span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG - SDK delete_object response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to boto3-like response</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;ResponseMetadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;HTTPStatusCode&#39;</span><span class="p">:</span> <span class="mi">200</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+        
+<div class="viewcode-block" id="S3Client.head_bucket">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.head_bucket">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">head_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if a bucket exists and if the caller has permission to access it.</span>
+<span class="sd">        </span>
+<span class="sd">        This method is more efficient than listing all buckets when you only need</span>
+<span class="sd">        to check the existence of a specific bucket.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket to check.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the bucket exists and the caller has permission to access it,</span>
+<span class="sd">            False if the bucket does not exist.</span>
+<span class="sd">            </span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        HTTPError</span>
+<span class="sd">            If the caller does not have permission to access the bucket (403) or</span>
+<span class="sd">            for other errors besides 404 (bucket not found).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urljoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Handle other error codes (e.g., 403 Forbidden)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+                
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># If it&#39;s a 404, return False for bucket not found</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;response&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="c1"># Re-raise other exceptions</span>
+            <span class="k">raise</span></div>
+
+        
+<div class="viewcode-block" id="S3Client.list_objects">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.list_objects">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List objects in a bucket (legacy method).</span>
+<span class="sd">        </span>
+<span class="sd">        This is an alias for list_objects_v2 to maintain compatibility with</span>
+<span class="sd">        code that uses the older S3 API naming.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Prefix : str, optional</span>
+<span class="sd">            Only return objects that start with this prefix.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing a list of objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span><span class="n">Bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="S3Client.head_object">
+<a class="viewcode-back" href="../../opens3.html#opens3.client.S3Client.head_object">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">head_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Bucket</span><span class="p">,</span> <span class="n">Key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve metadata from an object without returning the object itself.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Bucket : str</span>
+<span class="sd">            The name of the bucket.</span>
+<span class="sd">        Key : str</span>
+<span class="sd">            The key of the object.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The object metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># We need to implement head_object for metadata retrieval</span>
+        <span class="c1"># In this simple implementation, we&#39;ll get metadata from the server</span>
+        <span class="c1"># by making a special call to the same endpoint</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># First check if the object exists by getting its size</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+                <span class="s1">&#39;head&#39;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects/</span><span class="si">{</span><span class="n">Key</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Try to get metadata from sidecar file if it exists</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">metadata_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_api_call</span><span class="p">(</span>
+                    <span class="s1">&#39;get&#39;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s1">&#39;/buckets/</span><span class="si">{</span><span class="n">Bucket</span><span class="si">}</span><span class="s1">/objects/</span><span class="si">{</span><span class="n">Key</span><span class="si">}</span><span class="s1">/metadata&#39;</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="s1">&#39;metadata&#39;</span> <span class="ow">in</span> <span class="n">metadata_response</span><span class="p">:</span>
+                    <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata_response</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Metadata endpoint might not exist, which is fine</span>
+                <span class="k">pass</span>
+                
+            <span class="c1"># Return in boto3-like format</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;ContentLength&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="s1">&#39;LastModified&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;last_modified&#39;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()))</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;last_modified&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+                                <span class="k">else</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;last_modified&#39;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()),</span>
+                <span class="s1">&#39;ContentType&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content_type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/octet-stream&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;Metadata&#39;</span><span class="p">:</span> <span class="n">metadata</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># If head request fails, the object likely doesn&#39;t exist</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Object does not exist: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, SourceBox LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

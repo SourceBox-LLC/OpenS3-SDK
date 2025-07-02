@@ -1,0 +1,7 @@
+hybrid\_directory\_demo module
+==============================
+
+.. automodule:: hybrid_directory_demo
+   :members:
+   :undoc-members:
+   :show-inheritance:

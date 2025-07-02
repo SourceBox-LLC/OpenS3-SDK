@@ -1,0 +1,21 @@
+opens3.utils package
+====================
+
+Submodules
+----------
+
+opens3.utils.auth module
+------------------------
+
+.. automodule:: opens3.utils.auth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: opens3.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>opens3 package &mdash; OpenS3 SDK  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            OpenS3 SDK
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OpenS3 SDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">opens3 package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/opens3.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="opens3-package">
+<h1>opens3 package<a class="headerlink" href="#opens3-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="opens3.utils.html">opens3.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="opens3.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="opens3.utils.html#module-opens3.utils.auth">opens3.utils.auth module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="opens3.utils.html#opens3.utils.auth.get_auth_params"><code class="docutils literal notranslate"><span class="pre">get_auth_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="opens3.utils.html#module-opens3.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-opens3.client">
+<span id="opens3-client-module"></span><h2>opens3.client module<a class="headerlink" href="#module-opens3.client" title="Link to this heading"></a></h2>
+<p>OpenS3 Client Implementation.</p>
+<p>This module provides the client classes for interacting with OpenS3 services.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="opens3.client.S3Client">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.client.</span></span><span class="sig-name descname"><span class="pre">S3Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A low-level client for OpenS3’s S3-compatible interface.</p>
+<p>This client mimics the boto3 S3 client interface for seamless transition
+from AWS S3 to OpenS3.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.create_bucket">
+<span class="sig-name descname"><span class="pre">create_bucket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.create_bucket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.create_bucket" title="Link to this definition"></a></dt>
+<dd><p>Create a new bucket.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket to create.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.create_directory">
+<span class="sig-name descname"><span class="pre">create_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DirectoryPath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.create_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.create_directory" title="Link to this definition"></a></dt>
+<dd><p>Create a directory in a bucket.</p>
+<p>This is an OpenS3 extension method for intuitive directory management.
+For S3-compatible code, you can also use put_object with a key ending in ‘/’ and empty content.</p>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>DirectoryPath<span class="classifier">str</span></dt><dd><p>The path of the directory to create. Should end with a ‘/’.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.create_directory_s3_style">
+<span class="sig-name descname"><span class="pre">create_directory_s3_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DirectoryPath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.create_directory_s3_style"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.create_directory_s3_style" title="Link to this definition"></a></dt>
+<dd><p>Create a directory in an S3-compatible way (by creating a zero-byte object with trailing slash).</p>
+<p>This method provides maximum compatibility with code written for AWS S3/boto3.</p>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>DirectoryPath<span class="classifier">str</span></dt><dd><p>The path of the directory to create. Should end with a ‘/’.</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.delete_bucket">
+<span class="sig-name descname"><span class="pre">delete_bucket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ForceEmpty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.delete_bucket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.delete_bucket" title="Link to this definition"></a></dt>
+<dd><p>Delete a bucket.</p>
+<section id="id5">
+<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>ForceEmpty<span class="classifier">bool, optional</span></dt><dd><p>If True, forcefully empties the bucket before attempting deletion.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.delete_object">
+<span class="sig-name descname"><span class="pre">delete_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.delete_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.delete_object" title="Link to this definition"></a></dt>
+<dd><p>Delete an object from a bucket.</p>
+<section id="id7">
+<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key of the object.</p>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.download_directory">
+<span class="sig-name descname"><span class="pre">download_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LocalPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.download_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.download_directory" title="Link to this definition"></a></dt>
+<dd><p>Download a directory and its contents from a bucket</p>
+<section id="id9">
+<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key prefix of the directory in the bucket</p>
+</dd>
+<dt>local_directory<span class="classifier">str</span></dt><dd><p>The local directory to download to (alternatively use LocalPath)</p>
+</dd>
+<dt>LocalPath<span class="classifier">str</span></dt><dd><p>Alias for local_directory (for compatibility with test scripts)</p>
+</dd>
+</dl>
+</section>
+<section id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Dictionary with download statistics</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.download_file">
+<span class="sig-name descname"><span class="pre">download_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.download_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.download_file" title="Link to this definition"></a></dt>
+<dd><p>Download a file from a bucket</p>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key of the object</p>
+</dd>
+<dt>Filename<span class="classifier">str</span></dt><dd><p>The local filename to download to</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.get_object">
+<span class="sig-name descname"><span class="pre">get_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.get_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.get_object" title="Link to this definition"></a></dt>
+<dd><p>Retrieve an object from a bucket.</p>
+<section id="id13">
+<h3>Parameters<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key of the object.</p>
+</dd>
+</dl>
+</section>
+<section id="id14">
+<h3>Returns<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>The object data and metadata, with a ‘Body’ key containing the object content.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.head_bucket">
+<span class="sig-name descname"><span class="pre">head_bucket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.head_bucket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.head_bucket" title="Link to this definition"></a></dt>
+<dd><p>Check if a bucket exists and if the caller has permission to access it.</p>
+<p>This method is more efficient than listing all buckets when you only need
+to check the existence of a specific bucket.</p>
+<section id="id15">
+<h3>Parameters<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket to check.</p>
+</dd>
+</dl>
+</section>
+<section id="id16">
+<h3>Returns<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>bool</dt><dd><p>True if the bucket exists and the caller has permission to access it,
+False if the bucket does not exist.</p>
+</dd>
+</dl>
+</section>
+<section id="raises">
+<h3>Raises<a class="headerlink" href="#raises" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>HTTPError</dt><dd><p>If the caller does not have permission to access the bucket (403) or
+for other errors besides 404 (bucket not found).</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.head_object">
+<span class="sig-name descname"><span class="pre">head_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.head_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.head_object" title="Link to this definition"></a></dt>
+<dd><p>Retrieve metadata from an object without returning the object itself.</p>
+<section id="id17">
+<h3>Parameters<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key of the object.</p>
+</dd>
+</dl>
+</section>
+<section id="id18">
+<h3>Returns<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>The object metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.list_buckets">
+<span class="sig-name descname"><span class="pre">list_buckets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.list_buckets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.list_buckets" title="Link to this definition"></a></dt>
+<dd><p>List all buckets.</p>
+<section id="id19">
+<h3>Returns<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>A dictionary containing a list of buckets.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.list_objects">
+<span class="sig-name descname"><span class="pre">list_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.list_objects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.list_objects" title="Link to this definition"></a></dt>
+<dd><p>List objects in a bucket (legacy method).</p>
+<p>This is an alias for list_objects_v2 to maintain compatibility with
+code that uses the older S3 API naming.</p>
+<section id="id20">
+<h3>Parameters<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Prefix<span class="classifier">str, optional</span></dt><dd><p>Only return objects that start with this prefix.</p>
+</dd>
+</dl>
+</section>
+<section id="id21">
+<h3>Returns<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>A dictionary containing a list of objects.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.list_objects_v2">
+<span class="sig-name descname"><span class="pre">list_objects_v2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.list_objects_v2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.list_objects_v2" title="Link to this definition"></a></dt>
+<dd><p>List objects in a bucket with support for directory-like hierarchies.</p>
+<section id="id22">
+<h3>Parameters<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Prefix<span class="classifier">str, optional</span></dt><dd><p>Only return objects that start with this prefix.</p>
+</dd>
+<dt>Delimiter<span class="classifier">str, optional</span></dt><dd><p>Character used to group keys (typically ‘/’).
+When specified, the response will include CommonPrefixes,
+which are keys between the Prefix and the Delimiter.</p>
+</dd>
+</dl>
+</section>
+<section id="id23">
+<h3>Returns<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>A dictionary containing a list of objects and common prefixes.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.put_object">
+<span class="sig-name descname"><span class="pre">put_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Body</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.put_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.put_object" title="Link to this definition"></a></dt>
+<dd><p>Add an object to a bucket.</p>
+<section id="id24">
+<h3>Parameters<a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key (name) of the object.</p>
+</dd>
+<dt>Body<span class="classifier">bytes or file-like object</span></dt><dd><p>The content of the object.</p>
+</dd>
+<dt><a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs<span class="classifier">dict</span></dt><dd><p>Additional parameters like ContentType, Metadata, etc.</p>
+</dd>
+</dl>
+</section>
+<section id="id27">
+<h3>Returns<a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.upload_directory">
+<span class="sig-name descname"><span class="pre">upload_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.upload_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.upload_directory" title="Link to this definition"></a></dt>
+<dd><p>Upload a directory and its contents to a bucket</p>
+<section id="id28">
+<h3>Parameters<a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>local_directory<span class="classifier">str</span></dt><dd><p>The local directory to upload</p>
+</dd>
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key prefix to use for the directory in the bucket</p>
+</dd>
+</dl>
+</section>
+<section id="id29">
+<h3>Returns<a class="headerlink" href="#id29" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Dictionary with upload statistics</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.client.S3Client.upload_file">
+<span class="sig-name descname"><span class="pre">upload_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/client.html#S3Client.upload_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client.S3Client.upload_file" title="Link to this definition"></a></dt>
+<dd><p>Upload a file to a bucket.</p>
+<section id="id30">
+<h3>Parameters<a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>Filename<span class="classifier">str</span></dt><dd><p>The path to the file to upload.</p>
+</dd>
+<dt>Bucket<span class="classifier">str</span></dt><dd><p>The name of the bucket.</p>
+</dd>
+<dt>Key<span class="classifier">str</span></dt><dd><p>The key (name) to give the object in the bucket.</p>
+</dd>
+</dl>
+</section>
+<section id="id31">
+<h3>Returns<a class="headerlink" href="#id31" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Response metadata.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-opens3.exceptions">
+<span id="opens3-exceptions-module"></span><h2>opens3.exceptions module<a class="headerlink" href="#module-opens3.exceptions" title="Link to this heading"></a></h2>
+<p>OpenS3 Exceptions.</p>
+<p>This module provides the exception classes for OpenS3.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="opens3.exceptions.BucketAlreadyExists">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.exceptions.</span></span><span class="sig-name descname"><span class="pre">BucketAlreadyExists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/exceptions.html#BucketAlreadyExists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.exceptions.BucketAlreadyExists" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#opens3.exceptions.ClientError" title="opens3.exceptions.ClientError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClientError</span></code></a></p>
+<p>Raised when a bucket already exists.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="opens3.exceptions.ClientError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.exceptions.</span></span><span class="sig-name descname"><span class="pre">ClientError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/exceptions.html#ClientError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.exceptions.ClientError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#opens3.exceptions.OpenS3Error" title="opens3.exceptions.OpenS3Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpenS3Error</span></code></a></p>
+<p>Raised when a client-side error occurs.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="opens3.exceptions.NoSuchBucket">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.exceptions.</span></span><span class="sig-name descname"><span class="pre">NoSuchBucket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/exceptions.html#NoSuchBucket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.exceptions.NoSuchBucket" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#opens3.exceptions.ClientError" title="opens3.exceptions.ClientError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClientError</span></code></a></p>
+<p>Raised when a bucket does not exist.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="opens3.exceptions.NoSuchKey">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.exceptions.</span></span><span class="sig-name descname"><span class="pre">NoSuchKey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/exceptions.html#NoSuchKey"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.exceptions.NoSuchKey" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#opens3.exceptions.ClientError" title="opens3.exceptions.ClientError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClientError</span></code></a></p>
+<p>Raised when an object key does not exist.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="opens3.exceptions.OpenS3Error">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.exceptions.</span></span><span class="sig-name descname"><span class="pre">OpenS3Error</span></span><a class="reference internal" href="_modules/opens3/exceptions.html#OpenS3Error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.exceptions.OpenS3Error" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Base class for all OpenS3 errors.</p>
+</dd></dl>
+
+</section>
+<section id="module-opens3.session">
+<span id="opens3-session-module"></span><h2>opens3.session module<a class="headerlink" href="#module-opens3.session" title="Link to this heading"></a></h2>
+<p>OpenS3 Session Management.</p>
+<p>This module provides the Session class for managing clients and resources.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="opens3.session.Session">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">opens3.session.</span></span><span class="sig-name descname"><span class="pre">Session</span></span><a class="reference internal" href="_modules/opens3/session.html#Session"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.session.Session" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A session for managing connections to OpenS3.</p>
+<p>A session manages configuration settings and allows you to create
+service clients and resources.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="opens3.session.Session.create_client">
+<span class="sig-name descname"><span class="pre">create_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3/session.html#Session.create_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.session.Session.create_client" title="Link to this definition"></a></dt>
+<dd><p>Create a service client by name.</p>
+<section id="id32">
+<h3>Parameters<a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>service_name<span class="classifier">str</span></dt><dd><p>The name of the service to connect to.</p>
+</dd>
+<dt><a href="#id33"><span class="problematic" id="id34">**</span></a>kwargs</dt><dd><p>Additional arguments to configure the client.</p>
+</dd>
+</dl>
+</section>
+<section id="id35">
+<h3>Returns<a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>client</dt><dd><p>A service client instance</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-opens3">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-opens3" title="Link to this heading"></a></h2>
+<p>OpenS3 SDK - A boto3-like interface for OpenS3.</p>
+<p>This module provides a simple interface for interacting with the OpenS3 service,
+mimicking the AWS boto3 library’s interface for easy adoption by AWS users.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="opens3.client">
+<span class="sig-prename descclassname"><span class="pre">opens3.</span></span><span class="sig-name descname"><span class="pre">client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3.html#client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.client" title="Link to this definition"></a></dt>
+<dd><p>Create a low-level service client by name.</p>
+<section id="id36">
+<h3>Parameters<a class="headerlink" href="#id36" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>service_name<span class="classifier">str</span></dt><dd><p>The name of the service to connect to. Currently only ‘s3’ is supported.</p>
+</dd>
+<dt><a href="#id37"><span class="problematic" id="id38">**</span></a>kwargs</dt><dd><p>Keyword arguments to pass to the Session.create_client method.</p>
+</dd>
+</dl>
+</section>
+<section id="id39">
+<h3>Returns<a class="headerlink" href="#id39" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>opens3.client.S3Client</dt><dd><p>A low-level client instance</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="opens3.resource">
+<span class="sig-prename descclassname"><span class="pre">opens3.</span></span><span class="sig-name descname"><span class="pre">resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/opens3.html#resource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#opens3.resource" title="Link to this definition"></a></dt>
+<dd><p>Create a resource service client by name.</p>
+<section id="id40">
+<h3>Parameters<a class="headerlink" href="#id40" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>service_name<span class="classifier">str</span></dt><dd><p>The name of the service to connect to. Currently only ‘s3’ is supported.</p>
+</dd>
+<dt><a href="#id41"><span class="problematic" id="id42">**</span></a>kwargs</dt><dd><p>Keyword arguments to pass to the Session.create_resource method.</p>
+</dd>
+</dl>
+</section>
+<section id="id43">
+<h3>Returns<a class="headerlink" href="#id43" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>opens3.resource.S3Resource</dt><dd><p>A resource client instance</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, SourceBox LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

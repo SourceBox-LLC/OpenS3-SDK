@@ -1,0 +1,45 @@
+opens3 package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   opens3.utils
+
+Submodules
+----------
+
+opens3.client module
+--------------------
+
+.. automodule:: opens3.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+opens3.exceptions module
+------------------------
+
+.. automodule:: opens3.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+opens3.session module
+---------------------
+
+.. automodule:: opens3.session
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: opens3
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+hybrid\_compatibility\_test module
+==================================
+
+.. automodule:: hybrid_compatibility_test
+   :members:
+   :undoc-members:
+   :show-inheritance:

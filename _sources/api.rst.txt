@@ -1,0 +1,10 @@
+API Reference
+============
+
+S3Client
+-------
+
+.. autoclass:: opens3.client.S3Client
+   :members:
+   :undoc-members:
+   :show-inheritance:

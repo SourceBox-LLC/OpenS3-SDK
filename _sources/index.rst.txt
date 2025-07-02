@@ -1,0 +1,39 @@
+OpenS3 SDK Documentation
+=======================
+
+A Python SDK for interacting with OpenS3, an S3-compatible storage service.
+
+Installation
+-----------
+
+.. code-block:: bash
+
+    pip install opens3
+
+Quick Start
+----------
+
+.. code-block:: python
+
+    from opens3 import S3Client
+    
+    # Create a client
+    client = S3Client('http://localhost:8000', ('username', 'password'))
+    
+    # Create a bucket
+    client.create_bucket('my-bucket')
+    
+    # Upload a file
+    client.put_object('my-bucket', 'hello.txt', 'Hello, OpenS3!')
+    
+    # List objects
+    objects = client.list_objects_v2('my-bucket')
+    print(objects)
+
+API Reference
+------------
+
+.. toctree::
+   :maxdepth: 2
+   
+   api
