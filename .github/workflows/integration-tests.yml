@@ -69,8 +69,8 @@ jobs:
         export OPENS3_AUTH_USER=admin
         export OPENS3_AUTH_PASS=password
         
-        # Run tests excluding ci-compatible mocked tests
-        python -m pytest tests/ --ignore=tests/test_ci_compatible.py -v
+        # Run only integration tests
+        python -m pytest tests/test_integration.py -v
 
     - name: Shutdown OpenS3 Server
       if: always()  # Run even if tests fail

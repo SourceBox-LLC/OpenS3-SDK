@@ -112,7 +112,16 @@ class TestS3ClientIntegration(unittest.TestCase):
         )
         
         self.assertIn("Body", response)
-        self.assertEqual(response["Body"], self.test_content)
+        # The Body field contains a Response object, we need to extract the content
+        if hasattr(response["Body"], "content"):
+            # If it's a Response object with content attribute
+            self.assertEqual(response["Body"].content, self.test_content)
+        elif hasattr(response["Body"], "read"):
+            # If it's a StreamingBody-like object
+            self.assertEqual(response["Body"].read(), self.test_content)
+        else:
+            # Fallback for direct content
+            self.assertEqual(response["Body"], self.test_content)
         
         # Delete object
         self.client.delete_object(
@@ -171,7 +180,7 @@ class TestS3ClientIntegration(unittest.TestCase):
         # Create test directory in bucket
         self.client.create_directory(
             Bucket=self.test_bucket,
-            Directory="test_directory"
+            directory="test_directory"
         )
         
         # Upload directory

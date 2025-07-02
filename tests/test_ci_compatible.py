@@ -101,7 +101,14 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Set specific response for this test
         if self.is_ci:
-            self.mock_session.return_value.request.return_value = self.create_bucket_response
+            # Set proper response format for create_bucket
+            create_response = mock.Mock()
+            create_response.status_code = 201
+            create_response.json.return_value = {
+                "message": "Bucket test-bucket created successfully",
+                "location": "/test-bucket"
+            }
+            self.mock_session.return_value.request.return_value = create_response
 
         # In CI mode, this will use the mocked session
         response = self.client.create_bucket(Bucket="test-bucket")
@@ -159,12 +166,37 @@ class TestS3ClientCIMode(unittest.TestCase):
             except:
                 pytest.skip("OpenS3 server not available for testing")
         
-        # Set specific response for this test
+        # Set specific responses for this test
         if self.is_ci:
-            self.mock_session.return_value.request.return_value = self.put_object_response
+            # Create bucket response
+            bucket_response = mock.Mock()
+            bucket_response.status_code = 201
+            bucket_response.json.return_value = {
+                "message": "Bucket test-bucket created successfully",
+                "location": "/test-bucket"
+            }
+            
+            # Put object response
+            put_response = mock.Mock()
+            put_response.status_code = 201
+            put_response.json.return_value = {"ETag": "\"fake-etag\""}
+            
+            # Configure the mock session to return different responses based on the request
+            def side_effect(method, url, **kwargs):
+                if method.lower() == "post" and url.endswith("/buckets"):
+                    return bucket_response
+                elif method.lower() == "post" and "objects" in url:
+                    return put_response
+                return mock.Mock(status_code=404)
+                
+            self.mock_session.return_value.request.side_effect = side_effect
         
-        # Call put_object
+        # First create the bucket
         bucket = "test-bucket"
+        if self.is_ci:
+            self.client.create_bucket(Bucket=bucket)
+        
+        # Then put the object
         key = "test-key.txt"
         body = "test content"
         response = self.client.put_object(Bucket=bucket, Key=key, Body=body)
@@ -190,18 +222,44 @@ class TestS3ClientCIMode(unittest.TestCase):
             except:
                 pytest.skip("OpenS3 server not available for testing")
         
-        # For get_object, we need to create a mock that has all the required attributes
+        # For get_object, we need to create mocks for bucket creation, object creation, and object retrieval
         if self.is_ci:
-            # Create a fresh mock for this test with the content attribute
-            mock_response = mock.Mock()
-            mock_response.status_code = 200
-            mock_response.content = b"test content"
-            mock_response.headers = {"Content-Type": "text/plain"}
-            self.mock_session.return_value.request.return_value = mock_response
+            # First create a bucket
+            bucket_response = mock.Mock()
+            bucket_response.status_code = 201
+            bucket_response.json.return_value = {"message": "Bucket test-bucket created successfully"}
+            
+            # Then create an object
+            put_response = mock.Mock()
+            put_response.status_code = 201
+            put_response.json.return_value = {"ETag": "\"fake-etag\""}
+            
+            # Finally, get the object
+            get_response = mock.Mock()
+            get_response.status_code = 200
+            get_response.content = b"test content"
+            get_response.headers = {"Content-Type": "text/plain"}
+            
+            # Configure the mock session to return different responses based on the request
+            def side_effect(method, url, **kwargs):
+                if method.lower() == "post" and url.endswith("/buckets"):
+                    return bucket_response
+                elif method.lower() == "post" and "objects" in url:
+                    return put_response
+                elif method.lower() == "get" and "object" in url:
+                    return get_response
+                return mock.Mock(status_code=404)
+                
+            self.mock_session.return_value.request.side_effect = side_effect
+        
+        # Create bucket and object first
+        if self.is_ci:
+            bucket = "test-bucket"
+            key = "test-key.txt"
+            self.client.create_bucket(Bucket=bucket)
+            self.client.put_object(Bucket=bucket, Key=key, Body="test content")
         
         # Call get_object
-        bucket = "test-bucket"
-        key = "test-key.txt"
         response = self.client.get_object(Bucket=bucket, Key=key)
         
         # Verify response
@@ -226,10 +284,36 @@ class TestS3ClientCIMode(unittest.TestCase):
             except:
                 pytest.skip("OpenS3 server not available for testing")
         
-        # Set specific response for this test
+        # Set specific responses for this test
         if self.is_ci:
-            self.mock_session.return_value.request.return_value = self.delete_response
-        
+            # First create a bucket to avoid 404 errors
+            bucket_response = mock.Mock()
+            bucket_response.status_code = 201
+            bucket_response.json.return_value = {"message": "Bucket test-bucket created successfully"}
+            
+            # Then set up the delete response
+            delete_response = mock.Mock()
+            delete_response.status_code = 200
+            delete_response.json.return_value = {
+                "message": "Object 'test-key.txt' deleted successfully from bucket 'test-bucket'",
+                "bucket": "test-bucket",
+                "key": "test-key.txt"
+            }
+            
+            # Configure the mock session to return different responses based on the request
+            def side_effect(method, url, **kwargs):
+                if method.lower() == "post" and url.endswith("/buckets"):
+                    return bucket_response
+                elif method.lower() == "delete" and "objects" in url:
+                    return delete_response
+                return mock.Mock(status_code=404)
+                
+            self.mock_session.return_value.request.side_effect = side_effect
+            
+        # Create bucket first
+        if self.is_ci:
+            self.client.create_bucket(Bucket="test-bucket")
+            
         # Call delete_object
         bucket = "test-bucket"
         key = "test-key.txt"
