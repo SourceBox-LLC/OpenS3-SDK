@@ -41,10 +41,10 @@ class TestS3ClientCIMode(unittest.TestCase):
             self.mock_response = mock.Mock()
             self.mock_response.status_code = 200
             
-            # For create_bucket, the SDK expects a response format that can be returned as is
+            # For create_bucket, the SDK returns ResponseMetadata and Location
             self.create_bucket_response = mock.Mock()
-            self.create_bucket_response.status_code = 200
-            self.create_bucket_response.json.return_value = {"created": True}
+            self.create_bucket_response.status_code = 201
+            self.create_bucket_response.json.return_value = {"name": "test-bucket"}
             
             # For list_buckets, the SDK expects a specific format with buckets list
             self.list_buckets_response = mock.Mock()
@@ -56,26 +56,22 @@ class TestS3ClientCIMode(unittest.TestCase):
                 ]
             }
             
-            # For put_object and get_object
+            # For put_object
             self.put_object_response = mock.Mock()
-            self.put_object_response.status_code = 200
-            self.put_object_response.json.return_value = {"etag": "abc123"}
+            self.put_object_response.status_code = 201
+            self.put_object_response.json.return_value = {"ETag": "\"fake-etag\""}
             
-            # For get_object
+            # For get_object - special handling for download response
             self.get_object_response = mock.Mock()
             self.get_object_response.status_code = 200
-            self.get_object_response.json.return_value = {
-                "Body": "test content",
-                "ContentType": "text/plain",
-                "ContentLength": 12,
-                "LastModified": "2025-07-01T00:00:00Z",
-                "ETag": "abc123"
-            }
+            self.get_object_response.content = b"test content"
+            self.get_object_response.headers = {"Content-Type": "text/plain"}
             
             # For delete operations
             self.delete_response = mock.Mock()
             self.delete_response.status_code = 204
-            self.delete_response.json.return_value = {"deleted": True}
+            # SDK transforms this to a simple HTTPStatusCode response
+            self.delete_response.json.return_value = {}
             
             # Default to generic mock response
             self.mock_session.return_value.request.return_value = self.mock_response
@@ -111,8 +107,8 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Verify response
         if self.is_ci:
-            self.assertIn("created", response)
-            self.assertTrue(response["created"])
+            self.assertIn("ResponseMetadata", response)
+            self.assertEqual(response["ResponseMetadata"]["HTTPStatusCode"], 201)
             # Verify the mock was called with the correct arguments
             self.mock_session.return_value.request.assert_called_once()
             args, kwargs = self.mock_session.return_value.request.call_args
@@ -174,8 +170,9 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Verify response
         if self.is_ci:
-            self.assertIn("etag", response)
-            self.assertEqual(response["etag"], "abc123")
+            self.assertIn("ResponseMetadata", response)
+            self.assertEqual(response["ResponseMetadata"]["HTTPStatusCode"], 201)
+            self.assertIn("ETag", response)
             
             # Verify the call
             method, url, *_ = self.mock_session.return_value.request.call_args[0]
@@ -192,9 +189,14 @@ class TestS3ClientCIMode(unittest.TestCase):
             except:
                 pytest.skip("OpenS3 server not available for testing")
         
-        # Set specific response for this test
+        # For get_object, we need to create a mock that has all the required attributes
         if self.is_ci:
-            self.mock_session.return_value.request.return_value = self.get_object_response
+            # Create a fresh mock for this test with the content attribute
+            mock_response = mock.Mock()
+            mock_response.status_code = 200
+            mock_response.content = b"test content"
+            mock_response.headers = {"Content-Type": "text/plain"}
+            self.mock_session.return_value.request.return_value = mock_response
         
         # Call get_object
         bucket = "test-bucket"
@@ -204,6 +206,8 @@ class TestS3ClientCIMode(unittest.TestCase):
         # Verify response
         if self.is_ci:
             self.assertIn("Body", response)
+            self.assertIn("ContentLength", response)
+            self.assertEqual(response["ContentLength"], len(b"test content"))
             self.assertIn("ContentType", response)
             self.assertEqual(response["ContentType"], "text/plain")
             
@@ -232,8 +236,8 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Verify response
         if self.is_ci:
-            self.assertIn("deleted", response)
-            self.assertTrue(response["deleted"])
+            self.assertIn("ResponseMetadata", response)
+            self.assertIn("HTTPStatusCode", response["ResponseMetadata"])
             
             # Verify the call
             method, url, *_ = self.mock_session.return_value.request.call_args[0]
@@ -259,8 +263,8 @@ class TestS3ClientCIMode(unittest.TestCase):
         
         # Verify response
         if self.is_ci:
-            self.assertIn("deleted", response)
-            self.assertTrue(response["deleted"])
+            self.assertIn("ResponseMetadata", response)
+            self.assertIn("HTTPStatusCode", response["ResponseMetadata"])
             
             # Verify the call
             method, url, *_ = self.mock_session.return_value.request.call_args[0]
