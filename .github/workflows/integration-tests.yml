@@ -1,0 +1,82 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:  # Allow manual triggering
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+jobs:
+  integration-test:
+    name: Integration Tests with OpenS3 Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # Set a reasonable timeout
+
+    steps:
+    - name: Checkout SDK
+      uses: actions/checkout@v3
+      with:
+        path: opens3-sdk
+
+    - name: Checkout OpenS3 Server
+      uses: actions/checkout@v3
+      with:
+        repository: SourceBox-LLC/OpenS3-server
+        path: opens3-server
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install SDK and dependencies
+      run: |
+        cd opens3-sdk
+        pip install -e .
+        pip install pytest pytest-cov pytest-mock
+
+    - name: Install Server dependencies
+      run: |
+        cd opens3-server
+        pip install -r requirements.txt
+
+    - name: Start OpenS3 Server
+      run: |
+        cd opens3-server
+        # Run the server in the background on port 8001
+        python server.py --port 8001 &
+        echo $! > server_pid.txt
+        # Wait for server to start up
+        sleep 5
+        # Check if server is running
+        curl -s http://localhost:8001/health || { echo "Server failed to start"; exit 1; }
+        echo "OpenS3 Server is running on port 8001"
+
+    - name: Run Integration Tests
+      run: |
+        cd opens3-sdk
+        # Set environment variables for tests
+        export OPENS3_INTEGRATION_TEST=1
+        export OPENS3_ENDPOINT=http://localhost:8001
+        export OPENS3_AUTH_USER=admin
+        export OPENS3_AUTH_PASS=password
+        
+        # Run tests excluding ci-compatible mocked tests
+        python -m pytest tests/ --ignore=tests/test_ci_compatible.py -v
+
+    - name: Shutdown OpenS3 Server
+      if: always()  # Run even if tests fail
+      run: |
+        cd opens3-server
+        if [ -f server_pid.txt ]; then
+          kill $(cat server_pid.txt) || true
+          echo "Server stopped"
+        fi
